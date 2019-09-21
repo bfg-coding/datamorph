@@ -8,6 +8,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use json::JsonValue;
 use std::fs;
 use std::fs::File;
+use std::io::BufReader;
 
 // Start of the command line tool
 fn main() {
@@ -41,15 +42,13 @@ fn main() {
 
     // Open the input file
     let file = File::open(input).expect("Failed to open file");
+    let buf_reader = BufReader::new(file);
 
     // Create a json body
-    let mut json_body: JsonValue;
-
-    // Make it an array
-    json_body = array![];
+    let mut json_body: JsonValue = array!());
 
     // Create reader and extract the header information
-    let mut rdr = csv::Reader::from_reader(file);
+    let mut rdr = csv::Reader::from_reader(buf_reader);
     let headers = rdr.headers().expect("Failed to read headers").clone();
 
     // Count
@@ -102,7 +101,8 @@ fn get_count(input: &str) -> u64 {
 
     // Go open the file again to generate another reader
     let file = File::open(input).expect("Failed to open file");
-    let mut rdr = csv::Reader::from_reader(&file);
+    let buf_reader = BufReader::new(file);
+    let mut rdr = csv::Reader::from_reader(buf_reader);
 
     // Make an empty mutable byte record so we can loop over the rdr and add 1 per loop to count
     let mut record = csv::ByteRecord::new();
