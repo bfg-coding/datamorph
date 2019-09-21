@@ -53,7 +53,7 @@ fn main() {
     let headers = rdr.headers().expect("Failed to read headers").clone();
 
     // Count
-    let count = 198469;
+    let count: u64 = get_count(&input);
 
     // Set the progress bar
     let bar = ProgressBar::new(count);
@@ -94,4 +94,25 @@ fn main() {
 
     // Complete the progress bar
     bar.finish_with_message("Conversion completed");
+}
+
+fn get_count(input: &str) -> u64 {
+    // Init the count
+    let mut count: u64 = 0;
+
+    // Go open the file again to generate another reader
+    let file = File::open(input).expect("Failed to open file");
+    let mut rdr = csv::Reader::from_reader(&file);
+
+    // Make an empty mutable byte record so we can loop over the rdr and add 1 per loop to count
+    let mut record = csv::ByteRecord::new();
+    while (rdr)
+        .read_byte_record(&mut record)
+        .expect("error getting rows")
+    {
+        count += 1
+    }
+
+    // Return count
+    count
 }
