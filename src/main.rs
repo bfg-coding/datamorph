@@ -33,13 +33,6 @@ fn main() {
                 .help("Sets path to output file")
                 .takes_value(true),
         )
-        .arg(
-            Arg::with_name("lower_case")
-                .short("l")
-                .long("lower_case")
-                .value_name("FILE")
-                .help("Sets path to output file"),
-        )
         .get_matches();
 
     println!("Getting inputs");
