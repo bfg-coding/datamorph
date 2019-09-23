@@ -9,11 +9,10 @@ use json::JsonValue;
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
+use std::process;
 
 // Start of the command line tool
 fn main() {
-    println!("Running command");
-
     // Build the args list
     let matches = App::new("csv-to-json")
         .version("0.1.0")
@@ -34,25 +33,63 @@ fn main() {
                 .help("Sets path to output file")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("lower_case")
+                .short("l")
+                .long("lower_case")
+                .value_name("FILE")
+                .help("Sets path to output file"),
+        )
         .get_matches();
 
-    // Get the arguements
-    let input: &str = matches.value_of("csv").unwrap();
-    let output: &str = matches.value_of("output").unwrap_or("./jsonResult.json");
+    println!("Getting inputs");
+    // Capturing the input arg
+    let input = match matches.value_of("csv") {
+        Some(input) => input,
+        None => {
+            println!("Unable to read input");
+            process::exit(1);
+        }
+    };
 
-    // Open the input file
-    let file = File::open(input).expect("Failed to open file");
-    let buf_reader = BufReader::new(file);
-
-    // Create a json body
-    let mut json_body: JsonValue = array!());
-
-    // Create reader and extract the header information
-    let mut rdr = csv::Reader::from_reader(buf_reader);
-    let headers = rdr.headers().expect("Failed to read headers").clone();
+    // Capturing the output arg if given
+    let output: &str = match matches.value_of("output") {
+        Some(output) => output,
+        None => "./jsonResult.json",
+    };
 
     // Count
     let count: u64 = get_count(&input);
+
+    println!("Reading csv file");
+    // Open the input file
+    let file = match File::open(input) {
+        Ok(file) => file,
+        Err(err) => {
+            println!("{}", err);
+            process::exit(1);
+        }
+    };
+    let buf_reader = BufReader::new(file);
+
+    // Create a json body
+    let mut json_body: JsonValue;
+
+    if count > 1 {
+        json_body = array![];
+    } else {
+        json_body = object! {};
+    }
+
+    // Create reader and extract the header information
+    let mut rdr = csv::Reader::from_reader(buf_reader);
+    let headers = match rdr.headers() {
+        Ok(headers) => headers.clone(),
+        Err(err) => {
+            println!("Error occured: {}", err);
+            process::exit(1);
+        }
+    };
 
     // Set the progress bar
     let bar = ProgressBar::new(count);
@@ -64,6 +101,7 @@ fn main() {
             .progress_chars("#>-"),
     );
 
+    println!("Processing records");
     // Loop over the records and create an object per record and add it to the array
     for result in rdr.records() {
         bar.inc(1);
@@ -80,38 +118,54 @@ fn main() {
             if value.is_empty() {
                 element[header] = json::Null;
             } else {
-                element[header] = value.into();
+                element[header] = value.trim().into();
             }
         }
-        json_body
-            .push(element.clone())
-            .expect("Failed to push element into json");
+        if count > 1 {
+            match json_body.push(element.clone()) {
+                Ok(_) => (),
+                Err(err) => {
+                    println!("Error: {}", err);
+                    process::exit(1);
+                }
+            };
+        } else {
+            json_body = element;
+            break;
+        }
     }
-
-    // Write the json data to the file
-    fs::write(output, json::stringify_pretty(json_body, 4)).expect("Failed to write file");
 
     // Complete the progress bar
     bar.finish_with_message("Conversion completed");
+
+    println!("Writing JSON file now");
+
+    // Write the json data to the file
+    match fs::write(output, json::stringify_pretty(json_body, 4)) {
+        Ok(_) => (),
+        Err(err) => {
+            println!("Error writing json: {}", err);
+            process::exit(1);
+        }
+    };
+
+    println!("JSON creationg at {}", output);
 }
 
 fn get_count(input: &str) -> u64 {
-    // Init the count
-    let mut count: u64 = 0;
-
     // Go open the file again to generate another reader
-    let file = File::open(input).expect("Failed to open file");
+    let file = match File::open(input) {
+        Ok(file) => file,
+        Err(err) => {
+            println!("{}", err);
+            process::exit(1);
+        }
+    };
     let buf_reader = BufReader::new(file);
     let mut rdr = csv::Reader::from_reader(buf_reader);
 
-    // Make an empty mutable byte record so we can loop over the rdr and add 1 per loop to count
-    let mut record = csv::ByteRecord::new();
-    while (rdr)
-        .read_byte_record(&mut record)
-        .expect("error getting rows")
-    {
-        count += 1
-    }
+    // Create a count variable based on the record count
+    let count: u64 = rdr.records().count() as u64;
 
     // Return count
     count
