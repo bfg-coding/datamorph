@@ -27,11 +27,18 @@ fn main() {
         )
         .arg(
             Arg::with_name("output")
+                .help("Sets path to output file")
                 .short("o")
                 .long("output")
                 .value_name("FILE")
-                .help("Sets path to output file")
                 .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("lower_case")
+                .help("Sets the headers to lower case")
+                .short("l")
+                .long("lowercase")
+                .multiple(false),
         )
         .get_matches();
 
@@ -50,6 +57,9 @@ fn main() {
         Some(output) => output,
         None => "./jsonResult.json",
     };
+
+    // See if we will be lower casing the header info
+    let lower_case: bool = matches.is_present("lower_case");
 
     // Count
     let count: u64 = get_count(&input);
@@ -109,9 +119,17 @@ fn main() {
             let value: &str = &record[index];
 
             if value.is_empty() {
-                element[header] = json::Null;
+                if lower_case {
+                    element[header.to_lowercase()] = json::Null;
+                } else {
+                    element[header] = json::Null;
+                }
             } else {
-                element[header] = value.trim().into();
+                if lower_case {
+                    element[header.to_lowercase()] = value.trim().into();
+                } else {
+                    element[header] = value.trim().into();
+                }
             }
         }
         if count > 1 {
