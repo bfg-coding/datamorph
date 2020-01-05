@@ -9,6 +9,7 @@ use json::JsonValue;
 use std::fs;
 use std::fs::File;
 use std::io::BufReader;
+use std::path::Path;
 use std::process;
 
 // Start of the command line tool
@@ -148,6 +149,18 @@ fn main() {
 
     // Complete the progress bar
     bar.finish_with_message("Conversion completed");
+
+    // Checking to see if path exists
+    println!("Building path if needed");
+    if !Path::new(output).exists() {
+        match fs::create_dir_all(Path::new(output).parent().unwrap()) {
+            Ok(_) => (),
+            Err(err) => {
+                println!("error while building directories: {}", err);
+                process::exit(1)
+            }
+        };
+    }
 
     println!("Writing JSON file now");
 
