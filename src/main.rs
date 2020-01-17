@@ -41,6 +41,13 @@ fn main() {
                 .long("lowercase")
                 .multiple(false),
         )
+        .arg(
+            Arg::with_name("pretty")
+                .help("Sets if the json made pretty or not")
+                .short("p")
+                .long("pretty")
+                .multiple(false),
+        )
         .get_matches();
 
     println!("Getting inputs");
@@ -61,6 +68,9 @@ fn main() {
 
     // See if we will be lower casing the header info
     let lower_case: bool = matches.is_present("lower_case");
+
+    // See if we are building the json pretty or not
+    let pretty: bool = matches.is_present("pretty");
 
     // Count
     let count: u64 = get_count(&input);
@@ -165,13 +175,23 @@ fn main() {
     println!("Writing JSON file now");
 
     // Write the json data to the file
-    match fs::write(output, json::stringify_pretty(json_body, 4)) {
-        Ok(_) => (),
-        Err(err) => {
-            println!("Error writing json: {}", err);
-            process::exit(1);
+    if pretty {
+        match fs::write(output, json::stringify(json_body)) {
+            Ok(_) => (),
+            Err(err) => {
+                println!("Error writing json: {}", err);
+                process::exit(1);
+            }
         }
-    };
+    } else {
+        match fs::write(output, json::stringify_pretty(json_body, 4)) {
+            Ok(_) => (),
+            Err(err) => {
+                println!("Error writing json: {}", err);
+                process::exit(1);
+            }
+        };
+    }
 
     println!("JSON creationg at {}", output);
 }
