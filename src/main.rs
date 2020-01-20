@@ -52,7 +52,7 @@ fn main() {
 
     println!("Getting inputs");
     // Capturing the input arg
-    let input = match matches.value_of("csv") {
+    let input: &str = match matches.value_of("csv") {
         Some(input) => input,
         None => {
             println!("Unable to read input");
@@ -61,9 +61,9 @@ fn main() {
     };
 
     // Capturing the output arg if given
-    let output: &str = match matches.value_of("output") {
-        Some(output) => output,
-        None => "./jsonResult.json",
+    let output: String = match matches.value_of("output") {
+        Some(output) => output.to_owned(),
+        None => get_output(&input),
     };
 
     // See if we will be lower casing the header info
@@ -162,8 +162,8 @@ fn main() {
 
     // Checking to see if path exists
     println!("Building path if needed");
-    if !Path::new(output).exists() {
-        match fs::create_dir_all(Path::new(output).parent().unwrap()) {
+    if !Path::new(&output.clone()).exists() {
+        match fs::create_dir_all(Path::new(&output.clone()).parent().unwrap()) {
             Ok(_) => (),
             Err(err) => {
                 println!("error while building directories: {}", err);
@@ -173,6 +173,9 @@ fn main() {
     }
 
     println!("Writing JSON file now");
+
+    // Output path
+    let output_path = format!("{}", output);
 
     // Write the json data to the file
     if pretty {
@@ -193,7 +196,7 @@ fn main() {
         };
     }
 
-    println!("JSON creationg at {}", output);
+    println!("JSON creationg at {}", output_path);
 }
 
 fn get_count(input: &str) -> u64 {
@@ -213,4 +216,9 @@ fn get_count(input: &str) -> u64 {
 
     // Return count
     count
+}
+
+fn get_output(input: &str) -> String {
+    let path_name: &str = Path::new(input).file_name().unwrap().to_str().unwrap();
+    format!("{}{}", path_name, ".json")
 }
