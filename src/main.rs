@@ -10,6 +10,7 @@ use std::fs;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
+use std::path::PathBuf;
 use std::process;
 
 // Start of the command line tool
@@ -219,6 +220,8 @@ fn get_count(input: &str) -> u64 {
 }
 
 fn get_output(input: &str) -> String {
-    let path_name: &str = Path::new(input).file_name().unwrap().to_str().unwrap();
-    format!("{}{}", path_name, ".json")
+    let mut path_buff: std::path::PathBuf = PathBuf::from(input);
+    path_buff.set_extension("json");
+    let path_name: &str = path_buff.file_name().unwrap().to_str().unwrap();
+    format!("{}", path_name)
 }
