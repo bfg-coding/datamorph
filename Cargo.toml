@@ -5,7 +5,7 @@ description = "Utilit CLI for transfering CSV to JSON"
 homepage = "https://github.com/JustinR93/datamorph"
 documentation = "https://github.com/JustinR93/datamorph"
 repository = "https://github.com/JustinR93/datamorph"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Justin Rhoades <jrhoades93@gmail.com>"]
 edition = "2018"
 
