@@ -179,7 +179,7 @@ fn main() {
     let output_path = format!("{}", output);
 
     // Write the json data to the file
-    if pretty {
+    if !pretty {
         match fs::write(output, json::stringify(json_body)) {
             Ok(_) => (),
             Err(err) => {
